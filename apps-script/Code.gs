@@ -118,10 +118,7 @@ function getSheet_() {
 }
 
 function ensureHeader_(sheet) {
-  const current = sheet.getRange(1, 1, 1, HEADERS.length).getDisplayValues()[0];
-  const isBlank = current.every(value => !String(value).trim());
-
-  if (isBlank) {
+  if (sheet.getLastRow() === 0) {
     sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
     sheet.setFrozenRows(1);
   }

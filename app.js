@@ -112,6 +112,12 @@ async function submitRSVP(event) {
     return;
   }
 
+  if (typeof navigator.onLine === "boolean" && !navigator.onLine) {
+    formStatus.textContent = "ไม่สามารถเชื่อมต่ออินเทอร์เน็ตได้ กรุณาตรวจสอบสัญญาณเน็ตแล้วลองใหม่อีกครั้ง";
+    formStatus.className = "form-status error";
+    return;
+  }
+
   const attendance = getSelected("attendance");
   const payload = {
     submissionId: createSubmissionId(),
@@ -127,18 +133,24 @@ async function submitRSVP(event) {
 
   try {
     /*
-      Apps Script Web App ไม่ส่ง CORS header กลับมาสำหรับ static site ทั่วไป
-      จึงใช้ no-cors + text/plain เพื่อให้ GitHub Pages / Netlify POST ได้โดยไม่ preflight
+      ยิงคำขอไปยัง Google Apps Script เบื้องหลังโดยใช้ keepalive: true
+      บราวเซอร์การันตีการส่งข้อมูล แม้ผู้ใช้จะกดปิดหน้าต่างหรือเปลี่ยนแท็บ
     */
-    await fetch(API_URL, {
+    fetch(API_URL, {
       method: "POST",
       mode: "no-cors",
+      keepalive: true,
       cache: "no-store",
       headers: {
         "Content-Type": "text/plain;charset=utf-8"
       },
       body: JSON.stringify(payload)
+    }).catch((error) => {
+      console.error("Background sync error:", error);
     });
+
+    // หน่วงเวลาสั้น ๆ ~350ms เพื่อให้ Animation การกดส่งนุ่มนวลและไม่กระตุก
+    await new Promise((resolve) => setTimeout(resolve, 350));
 
     form.reset();
     updateGuestCountVisibility();
